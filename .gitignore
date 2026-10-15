@@ -1,0 +1,49 @@
+# Added by code-review-graph
+.code-review-graph/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env/
+
+# Hydra: каталоги прогонов
+outputs/
+multirun/
+.hydra/
+
+# MLflow / Optuna: локальные базы и логи (тяжёлые, машинно-зависимые)
+mlruns/
+artifacts/*.db
+artifacts/*.db-journal
+artifacts/baseline_runs/
+artifacts/hpo_runs/
+
+# Обученные модели и предсказания (воспроизводимы запуском)
+*.pt
+*_predictions*.csv
+cv_oof_predictions*.csv
+baseline_results.csv
+
+# IDE / редакторы
+.idea/
+.vscode/
+.cursor/
+*.iml
+
+# Кеши инструментов
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Временные lock-файлы редакторов
+.~lock.*#
+*.tmp
+*.swp
+*~

@@ -1,0 +1,93 @@
+# @package training
+
+seed: 42
+
+# Выбор архитектуры: cfmsr | skipgcn (см. model_factory.build_model).
+# Отдельная точка входа для SkipGCN: python main_skipgcn.py
+model_name: cfmsr
+
+epochs: 200
+lr: 1e-4
+weight_decay: 1e-4
+hidden_dim: 128
+num_layers: 2
+num_heads: 8
+ffn_mult: 4.0
+num_seeds: 8
+dropout: 0.156
+classifier_dropout: 0.42
+patience: 30
+grad_clip: 1.0
+model_out: cf_msr_best.pt
+predictions_out: holdout_predictions_active.csv
+
+# Дополнительная регуляризация (нейтральные дефолты = текущее поведение).
+drop_edge: 0.0
+node_noise_std: 0.0
+edge_noise_std: 0.0
+label_smoothing: 0.0
+use_node_embedding: true
+adamw_no_decay_bias_norm: false
+
+# Нормализация рёбер внутри attention (BatchNorm1d). При data.edge_scaler != none можно отключить.
+edge_batchnorm: true
+
+# Дополнительная ветка агрегации рёбер в вектор графа.
+edge_readout: none       # none | mean | gated
+edge_readout_dim: 16     # размерность проекции ребра в ветке edge_readout
+
+# Параметры SkipGCN (порт HCP_GCN); используются при training.model_name=skipgcn.
+skipgcn:
+  hidden_channels: 15        # embedding size вершины (дефолт HCP_GCN)
+  dropout: 0.2               # вероятность dropout после свёрток
+  pooling_type: global_max_pool   # global_max_pool | global_mean_pool
+
+# Early stopping / LR schedule.
+monitor_metric: null
+early_stop_min_delta: 0.0
+monitor_smoothing_window: 1
+lr_scheduler: plateau
+warmup_epochs: 0
+
+# ==========================================================
+# Управление метриками
+# ==========================================================
+
+# Какие метрики считать на train / validation / test.
+#
+# Поддерживаемые метрики:
+#   accuracy
+#   balanced_accuracy
+#   precision
+#   recall
+#   f1
+#   roc_auc
+#
+# Если metrics отсутствует или metrics: null -> считаются все метрики.
+# Если metrics: [] -> считается только loss.
+metrics:
+  - accuracy
+  - balanced_accuracy
+  - precision
+  - recall
+  - f1
+  - roc_auc
+
+# Порог для бинарных предсказаний:
+# pred = 1, если prob >= metric_threshold
+metric_threshold: 0.5
+
+# Метрика, используемая для early stopping / ReduceLROnPlateau.
+#
+# Поддерживаются:
+#   roc_auc
+#   accuracy
+#   balanced_accuracy
+#   precision
+#   recall
+#   f1
+#   loss
+#
+# Если score_metric недоступна или NaN, используется fallback:
+# roc_auc -> f1 -> balanced_accuracy -> precision -> recall -> accuracy -> -loss
+score_metric: roc_auc

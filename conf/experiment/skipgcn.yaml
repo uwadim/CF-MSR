@@ -1,0 +1,39 @@
+# @package _global_
+# SkipGCN (порт HCP_GCN, src/models.py) на данных проекта.
+# Ветка данных не переопределяется: те же CSV, сплит и нормализация, что у CF-MSR.
+#
+# Запуск single-split через отдельную точку входа:
+#   python main_skipgcn.py
+# Запуск через базовую точку входа:
+#   python main.py +experiment=skipgcn
+# Кросс-валидация SkipGCN:
+#   python main_skipgcn.py cv.enabled=true
+# Ручные переопределения:
+#   python main_skipgcn.py training.skipgcn.hidden_channels=32 training.lr=3e-4
+
+training:
+  model_name: skipgcn
+
+  # Оптимизатор как в HCP_GCN (Adam без weight decay).
+  lr: 1.0e-3
+  weight_decay: 0.0
+
+  # HCP_GCN обучал 50 эпох без early stopping; здесь early stopping
+  # включён через общий пайплайн (patience), эпох с запасом.
+  epochs: 100
+  patience: 20
+  monitor_metric: roc_auc
+  monitor_smoothing_window: 1
+
+  # CFMSR-специфичная регуляризация к SkipGCN не применяется.
+  drop_edge: 0.0
+  node_noise_std: 0.0
+  edge_noise_std: 0.0
+  label_smoothing: 0.0
+
+  # Отдельные имена артефактов, чтобы не перезаписывать CF-MSR.
+  model_out: skipgcn_best.pt
+  predictions_out: holdout_predictions_skipgcn.csv
+
+cv:
+  oof_out: cv_oof_predictions_skipgcn.csv

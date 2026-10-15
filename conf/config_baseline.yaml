@@ -1,0 +1,34 @@
+# Корневой конфиг для базовых моделей (sklearn).
+# Запуск: python baseline.py
+
+defaults:
+  - data
+  - training
+  - mlflow: default
+  - _self_
+
+mlflow:
+  experiment_name: cf_msr_baseline
+
+hydra:
+  run:
+    dir: artifacts/baseline_runs/${now:%Y-%m-%d_%H-%M-%S}
+
+baseline:
+  models: [dummy, edge_mean, logreg, random_forest]
+  feature_set: nodes            # nodes | edges | nodes_edges | edge_nodes
+  logreg_c_grid: [0.001, 0.01, 0.1, 1.0, 10.0]
+  rf:
+    n_estimators: 500
+    max_depth: 4
+    min_samples_leaf: 5
+  hist_gb:
+    max_depth: 3
+    learning_rate: 0.05
+    max_iter: 100
+  cv:
+    n_splits: 5
+    n_repeats: 5
+  bootstrap_n: 1000
+  permutation_n: 200
+  results_out: baseline_results.csv

@@ -1,0 +1,25 @@
+# Корневой конфиг для SkipGCN (порт HCP_GCN) на данных проекта.
+# Запуск: python main_skipgcn.py
+# CV: python main_skipgcn.py cv.enabled=true
+# Holdout ансамблем CV-моделей: python main_skipgcn.py cv.enabled=true cv.evaluate_holdout=true
+#
+# HPO через hpo.py не поддерживается: sweeper ищет параметры CFMSR.
+# Гиперпараметры SkipGCN задавать вручную:
+#   python main_skipgcn.py training.skipgcn.hidden_channels=32 training.lr=3e-4
+
+defaults:
+  - data
+  - training
+  - cv: default
+  - mlflow: default
+  - experiment: skipgcn
+  - _self_
+
+mlflow:
+  experiment_name: cf_msr_skipgcn
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  # Multirun Hydra отключён; для SkipGCN используйте одиночные запуски.
+  sweeper: null

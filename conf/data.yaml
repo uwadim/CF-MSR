@@ -1,0 +1,55 @@
+# @package data
+
+data_csv: '/home/vadim/workspace/Институт/HSE/disseminated_sclerosis/n_data_active.csv'
+train_valid_graphs_csv: '/home/vadim/workspace/Институт/Archive/Synolytic_network/results/result_graph_active.csv'
+holdout_graphs_csv: '/home/vadim/workspace/Институт/Archive/Synolytic_network/results/holdout_graph_active.csv'
+
+# Разделитель колонок во входных csv-файлах.
+separator: '|'
+
+target_col: "Активность"
+
+# Если null, будут использованы все колонки кроме target_col.
+# Можно переопределить из командной строки:
+# data.feature_cols='["Зрительная","Стволовая","Пирамидная"]'
+feature_cols: null
+
+batch_size: 8
+num_workers: 0
+
+val_ratio: 0.3
+
+# Если задан, validation будет состоять из образцов с этим fold.
+# Например: data.val_fold=1
+val_fold: null
+
+# pandas_row_index = sample_number - data_row_shift
+# Например, при data_row_shift=0: 355_fold1 -> data_df.iloc[355]
+data_row_shift: 0
+
+# Явное значение положительного класса.
+# Например: data.positive_label=1 или data.positive_label="Класс1"
+positive_label: 1
+
+# Колонка id пациента для group split (null = без групп).
+group_col: null
+
+# Отбор признаков узлов (только по train).
+feature_selection:
+  method: none            # none | variance | mutual_info | l1
+  top_k: null
+
+# Отбор рёбер (только по train).
+edge_selection:
+  method: none            # none | variance | abs_mean | mutual_info
+  top_k: null
+  keep_ratio: null
+
+# Признаки узлов из весов инцидентных рёбер (считаются после отбора узлов/рёбер).
+edge_node_features:
+  enabled: false
+  stats: [mean]        # подмножество: mean | std | max | min
+  include_raw: true    # оставить исходный табличный признак узла первым каналом
+
+# Нормировка весов рёбер по статистикам train.
+edge_scaler: none        # none | global | per_edge
