@@ -1,0 +1,36 @@
+# @package _global_
+# Пресет под прямой путь сигнала рёбер (Ш1–Ш2).
+# Запуск: python main.py +experiment=edge_signal
+
+data:
+  edge_node_features:
+    enabled: true
+    stats: [mean, std]
+    include_raw: true
+  edge_scaler: global
+  edge_selection:
+    method: variance
+    keep_ratio: 0.3
+
+training:
+  hidden_dim: 32
+  num_heads: 4
+  num_layers: 1
+  num_seeds: 2
+  ffn_mult: 2.0
+  dropout: 0.4
+  classifier_dropout: 0.5
+  weight_decay: 1.0e-2
+  lr: 3.0e-4
+  patience: 15
+  monitor_metric: loss
+  monitor_smoothing_window: 3
+  drop_edge: 0.3
+  edge_noise_std: 0.3
+  edge_batchnorm: false
+  edge_readout: none        # поднять до gated после Ш3
+
+cv:
+  enabled: true
+  ensemble_seeds: 3
+  evaluate_holdout: false

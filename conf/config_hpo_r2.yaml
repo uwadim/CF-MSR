@@ -1,0 +1,96 @@
+# Корневой конфиг HPO раунд 2 (тонкая настройка после cf_msr_hpo_v4).
+# Запуск:
+#   python hpo.py -m --config-name=config_hpo_r2
+#
+# Анализ artifacts/cf_msr_hpo_v4_summary.xlsx + MLflow (hp_plan.md §«после раунда 1»):
+# - Топ-5 value: 0.6986…0.6946, разброс ≈0.004 ≪ cv_objective_std (0.03–0.07) → плато.
+# - Важности <0.05 → фиксация на медиане топ-5:
+#     hidden_dim=32, weight_decay≈0.042, edge_noise_std≈0.17
+# - lr топ-5 упирается в верх раунда 1 (1e-3) → интервал сдвинут вверх.
+# - keep_ratio в топ-5 только {0.1, 0.2}; dropout сужен ±0.1 вокруг топ-5.
+# - drop_edge бимодален (~0 и ~0.35) → широкий интервал сохранён.
+# - Топ-5: cv_std_score ≤0.052 (порог 0.06), |oof_roc_auc − cv_objective| ≤0.02.
+# - Лучший CV AUC 0.699 vs logreg 0.74 (−0.04); раунд 2 — уточнение + штраф за std.
+# - Медиана best_epoch по fold ≈11–15.
+
+defaults:
+  - data
+  - training
+  - cv: default
+  - hpo: default
+  - mlflow: default
+  - override hydra/sweeper: optuna
+  - override hydra/launcher: basic
+  - _self_
+
+mlflow:
+  experiment_name: cf_msr_hpo
+
+hpo:
+  study_name: cf_msr_hpo_v4_r2
+  n_trials: 20
+
+# Фиксации данных (как в раунде 1; keep_ratio ищется в sweeper).
+data:
+  edge_selection:
+    method: variance
+    keep_ratio: 0.2
+  edge_node_features:
+    enabled: true
+    stats: [mean, std]
+    include_raw: true
+  edge_scaler: none
+
+# Архитектура раунда 1 + фиксации по importance < 0.05.
+training:
+  num_layers: 1
+  num_heads: 4
+  num_seeds: 2
+  ffn_mult: 2.0
+  hidden_dim: 32
+  classifier_dropout: 0.5
+  use_node_embedding: false
+  edge_readout: none
+  edge_batchnorm: true
+  label_smoothing: 0.0
+  node_noise_std: 0.0
+  weight_decay: 0.042
+  edge_noise_std: 0.17
+  epochs: 200
+  patience: 15
+  monitor_metric: loss
+  monitor_smoothing_window: 3
+
+# Учёт дисперсии: 3 seed, objective = mean − 0.5·std по fold AUC.
+cv:
+  enabled: true
+  ensemble_seeds: 3
+  evaluate_holdout: false
+  objective: mean_minus_std
+  std_penalty: 0.5
+  objective_metric: roc_auc
+  objective_scope: fold
+
+hydra:
+  mode: MULTIRUN
+  run:
+    dir: artifacts/hpo_runs/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: true
+  sweeper:
+    sampler:
+      seed: ${training.seed}
+    direction: maximize
+    storage: ${hpo.storage}
+    study_name: ${hpo.study_name}
+    n_trials: ${hpo.n_trials}
+    n_jobs: ${hpo.n_jobs}
+    params:
+      # Высокая важность; в топ-5 только эти два значения.
+      data.edge_selection.keep_ratio: choice(0.1, 0.2)
+      # Сдвиг вверх: раунд 1 [1e-4, 1e-3], топ-5 у верхней границы.
+      training.lr: tag(log, interval(5e-4, 3e-3))
+      # ±0.1 вокруг топ-5 [0.17, 0.25].
+      training.dropout: interval(0.12, 0.35)
+      # Бимодальность топ-5 (~0 и ~0.35) — не сужать.
+      training.drop_edge: interval(0.0, 0.4)

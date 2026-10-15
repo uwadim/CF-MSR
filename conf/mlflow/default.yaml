@@ -1,0 +1,9 @@
+# @package mlflow
+
+enabled: true
+# Относительный путь; в mlflow_utils разрешается от original cwd Hydra.
+tracking_uri: sqlite:///artifacts/mlflow.db
+experiment_name: cf_msr
+# Явное имя родительского run (null — train_<job> / trial_N). Не задавать для HPO.
+run_name: null
+log_artifacts: true

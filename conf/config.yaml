@@ -1,0 +1,14 @@
+# conf/config.yaml
+
+defaults:
+  - data
+  - training
+  - cv: default
+  - mlflow: default
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  # Multirun Hydra отключён; для HPO используйте config_hpo.yaml и hpo.py.
+  sweeper: null

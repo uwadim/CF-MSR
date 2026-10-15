@@ -1,0 +1,56 @@
+# @package _global_
+# Лучшая область по HPO (study cf_msr_hpo_v4 и cf_msr_hpo_v4_r2): медианы топ-5 trials r2.
+# CV 5 fold × 3 seed: ROC-AUC ≈ 0.70–0.71 (OOF ≈ 0.71–0.73); различия внутри топа меньше std.
+# Ожидаемый holdout заметно ниже CV (≈ 0.60–0.65).
+#
+# Запуск (оценка по CV, без holdout):
+#   python main.py +experiment=best_hpo
+# Проверка устойчивости по seed:
+#   python main.py +experiment=best_hpo training.seed=7
+# Финальный holdout — один раз:
+#   python main.py +experiment=best_hpo cv.evaluate_holdout=true cv.ensemble_seeds=5
+
+data:
+  edge_selection:
+    method: variance
+    keep_ratio: 0.2
+  edge_node_features:
+    enabled: true
+    stats: [mean, std]
+    include_raw: true
+  edge_scaler: none          # нормировку выполняет edge_batchnorm
+
+training:
+  # Архитектура (зафиксирована абляциями A0–A7).
+  hidden_dim: 32
+  num_layers: 1
+  num_heads: 4
+  num_seeds: 2
+  ffn_mult: 2.0
+  use_node_embedding: false
+  edge_readout: none
+  edge_batchnorm: true
+
+  # Параметры, найденные HPO.
+  lr: 2.0e-3
+  weight_decay: 0.04
+  dropout: 0.15
+  drop_edge: 0.2
+  edge_noise_std: 0.15
+
+  # Остальное, как в HPO.
+  classifier_dropout: 0.5
+  label_smoothing: 0.0
+  node_noise_std: 0.0
+  epochs: 200
+  patience: 15
+  monitor_metric: loss
+  monitor_smoothing_window: 3
+
+cv:
+  enabled: true
+  ensemble_seeds: 3
+  evaluate_holdout: false
+  objective: mean
+  objective_metric: roc_auc
+  objective_scope: fold

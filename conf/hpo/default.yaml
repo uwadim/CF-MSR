@@ -1,0 +1,9 @@
+# @package hpo
+
+# Количество trials Optuna (переопределяет hydra.sweeper.n_trials при необходимости).
+n_trials: 30
+n_jobs: 1
+
+# SQLite-хранилище результатов Optuna (путь относительно директории запуска).
+study_name: cf_msr_hpo_v4
+storage: sqlite:///artifacts/optuna.db

@@ -1,0 +1,84 @@
+# Корневой конфиг для поиска гиперпараметров (Hydra + Optuna Sweeper).
+# Запуск: python hpo.py -m
+#
+# Обычный grid/random multirun Hydra здесь не используется — только Optuna.
+#
+# Архитектура зафиксирована по результатам абляций A0–A7 (MLflow, эксперимент cf_msr):
+# варианты A1–A5, A7 различаются меньше std по fold (≈0.04), поэтому выбраны простые.
+# Ищутся только 7 осей (см. hydra.sweeper.params). Пресет +experiment=edge_signal
+# подключать не нужно: он перекрывает фиксированные значения ниже.
+
+defaults:
+  - data
+  - training
+  - cv: default
+  - hpo: default
+  - mlflow: default
+  - override hydra/sweeper: optuna
+  - override hydra/launcher: basic
+  - _self_
+
+# Отдельный эксперимент MLflow для HPO-прогонов.
+mlflow:
+  experiment_name: cf_msr_hpo
+
+# Фиксированные решения по данным. keep_ratio ищется в sweeper.
+data:
+  edge_selection:
+    method: variance
+    keep_ratio: 0.3
+  edge_node_features:
+    enabled: true
+    stats: [mean, std]
+    include_raw: true
+  edge_scaler: none          # нормировку выполняет edge_batchnorm (A7 ≡ A1)
+
+# Фиксированная архитектура и параметры обучения, которые не ищутся.
+training:
+  num_layers: 1
+  num_heads: 4
+  num_seeds: 2
+  ffn_mult: 2.0
+  classifier_dropout: 0.5
+  use_node_embedding: false
+  edge_readout: none
+  edge_batchnorm: true
+  label_smoothing: 0.0
+  node_noise_std: 0.0
+  epochs: 200
+  patience: 15
+  monitor_metric: loss         # выбор эпохи по val loss, как в абляциях
+  monitor_smoothing_window: 3
+
+# HPO только по кросс-валидации; holdout не трогаем.
+# Objective — средний ROC-AUC по fold/seed (а не -loss, как monitor_metric).
+cv:
+  enabled: true
+  ensemble_seeds: 1
+  evaluate_holdout: false
+  objective: mean
+  objective_metric: roc_auc
+  objective_scope: fold
+
+hydra:
+  mode: MULTIRUN
+  run:
+    dir: artifacts/hpo_runs/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: true
+  sweeper:
+    sampler:
+      seed: ${training.seed}
+    direction: maximize
+    storage: ${hpo.storage}
+    study_name: ${hpo.study_name}
+    n_trials: ${hpo.n_trials}
+    n_jobs: ${hpo.n_jobs}
+    params:
+      data.edge_selection.keep_ratio: choice(0.05, 0.1, 0.2, 0.3)
+      training.lr: tag(log, interval(1e-4, 1e-3))
+      training.weight_decay: tag(log, interval(1e-3, 1e-1))
+      training.hidden_dim: choice(16, 32, 64)
+      training.dropout: interval(0.1, 0.5)
+      training.drop_edge: interval(0.0, 0.4)
+      training.edge_noise_std: interval(0.0, 0.4)

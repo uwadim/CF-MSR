@@ -1,0 +1,15 @@
+hydra-core>=1.3.0
+hydra-optuna-sweeper>=1.2.0
+# mlflow 3.x (UI/server) требует SQLAlchemy 2.x (sa.Engine), а Optuna 2.x — SQLAlchemy <2.
+mlflow>=2.0.0,<3
+numpy
+omegaconf
+optuna>=2.10.0,<3
+# Optuna 2.x + RDB/SQLite требуют SQLAlchemy 1.4 (с 2.0 ломается alembic_version).
+sqlalchemy>=1.4,<2
+pandas
+openpyxl>=3.1.0
+scikit-learn
+torch
+torch-geometric
+pytest>=7.0.0

@@ -1,0 +1,15 @@
+# @package _global_
+# Пресет малой модели с сильной регуляризацией.
+# Запуск: python main.py +experiment=regularized
+
+training:
+  hidden_dim: 32
+  num_heads: 4
+  num_layers: 1
+  num_seeds: 2
+  ffn_mult: 2.0
+  dropout: 0.4
+  classifier_dropout: 0.5
+  weight_decay: 1.0e-2
+  lr: 3.0e-4
+  patience: 15
